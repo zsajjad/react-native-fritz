@@ -51,3 +51,8 @@ import RNFritz from 'react-native-fritz';
 RNFritz;
 ```
   
+
+### iOS Toubleshoot
+
+- Set `Allow Non-modular Include in Framework Module` to `Yes`, In build settings of RNFritz Target Under Pods project.
+-  
