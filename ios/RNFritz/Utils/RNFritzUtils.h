@@ -11,7 +11,6 @@
 
 @interface RNFritzUtils : NSObject 
 
-+ (NSMutableArray *) prepareOutput: (NSArray *)labels;
 + (FritzVisionImage *) getFritzVisionImage: (NSString *)imagePath;
 + (NSError *) errorFromException: (NSException *)exception;
 + (UIImage *) getUIImage: (NSString *)imagePath;

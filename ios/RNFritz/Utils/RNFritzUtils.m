@@ -12,18 +12,6 @@
 
 @implementation RNFritzUtils
 
-+ (NSMutableArray *) prepareOutput: (NSArray *)labels {
-    NSMutableArray *output = [NSMutableArray array];
-    for (FritzVisionLabel *label in labels) {
-        [output addObject:@{
-                            @"label": [label valueForKey:@"description"],
-                            @"description": [label valueForKey:@"description"],
-                            @"confidence": @1.0,
-                            }];
-    }
-    return output;
-}
-
 + (UIImage *) getUIImage: (NSString *)imagePath {
     NSData *imageData = [NSData dataWithContentsOfURL:[NSURL URLWithString:imagePath]];
     return [UIImage imageWithData:imageData];

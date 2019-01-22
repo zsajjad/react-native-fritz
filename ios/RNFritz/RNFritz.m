@@ -57,8 +57,7 @@ RCT_EXPORT_MODULE()
     [self onError:error];
 }
 
--(void) onSuccess: (NSArray *)objects {
-    NSMutableArray *output = [RNFritzUtils prepareOutput:objects];
+-(void) onSuccess: (NSMutableArray *)output {
     dispatch_async(dispatch_get_main_queue(), ^{
         self->_resolve(output);
     });

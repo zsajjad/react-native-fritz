@@ -34,15 +34,6 @@
 	compile project(':react-native-fritz')
 ```
 
-#### Windows
-[Read it! :D](https://github.com/ReactWindows/react-native)
-
-1. In Visual Studio add the `RNFritz.sln` in `node_modules/react-native-fritz/windows/RNFritz.sln` folder to their solution, reference from their app.
-2. Open up your `MainPage.cs` app
-  - Add `using Fritz.RNFritz;` to the usings at the top of the file
-  - Add `new RNFritzPackage()` to the `List<IReactPackage>` returned by the `Packages` method
-
-
 ## Usage
 ```javascript
 import RNFritz from 'react-native-fritz';

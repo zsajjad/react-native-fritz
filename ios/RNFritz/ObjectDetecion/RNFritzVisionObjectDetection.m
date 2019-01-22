@@ -1,20 +1,19 @@
 //
-//  RNFritzVisionImageLabeling.m
+//  RNFritzVisionObjectDetection.m
 //  RNFritz
 //
 //  Created by Zain Sajjad on 22/01/2019.
 //
+#import <React/RCTLog.h>
+#import "RNFritzVisionObjectDetection.h"
 
-#import "RNFritzVisionImageLabeling.h"
-
-#if __has_include(<FritzVisionLabelModel/FritzVisionLabelModel.h>)
+#if __has_include(<FritzVisionObjectModel/FritzVisionObjectModel.h>)
 
 #import "RNFritz.h"
 #import "RNFritzUtils.h"
 
-@import FritzVisionLabelModel;
-
-@implementation RNFritzVisionImageLabeling 
+@import FritzVisionObjectModel;
+@implementation RNFritzVisionObjectDetection
 
 - (dispatch_queue_t)methodQueue
 {
@@ -22,9 +21,10 @@
 }
 RCT_EXPORT_MODULE()
 
-- (FritzVisionLabelModelOptions *) getLabelModelOptions: (NSDictionary *)params {
-    return [[FritzVisionLabelModelOptions alloc]
+- (FritzVisionObjectModelOptions *) getLabelModelOptions: (NSDictionary *)params {
+    return [[FritzVisionObjectModelOptions alloc]
             initWithThreshold:[[params valueForKey:@"threshold"] floatValue]
+            iouThreshold:[[params valueForKey:@"iouThreshold"] floatValue]
             numResults:[[params valueForKey:@"resultLimit"] doubleValue]];
 }
 
@@ -32,6 +32,7 @@ RCT_EXPORT_MODULE()
 - (NSMutableArray *) prepareOutput: (NSArray *)labels {
     NSMutableArray *output = [NSMutableArray array];
     for (FritzVisionLabel *label in labels) {
+        RCTLog([label debugDescription]);
         [output addObject:@{
                             @"label": [label valueForKey:@"description"],
                             @"description": [label valueForKey:@"description"],
@@ -40,6 +41,7 @@ RCT_EXPORT_MODULE()
     }
     return output;
 }
+
 
 RCT_REMAP_METHOD(detect,
                  detect:(NSDictionary *)params
@@ -52,9 +54,9 @@ RCT_REMAP_METHOD(detect,
             [fritz initializeDetection:resolve rejector:reject];
             NSString *imagePath = [params valueForKey:@"imagePath"];
             FritzVisionImage *visionImage = [RNFritzUtils getFritzVisionImage:imagePath];
-            FritzVisionLabelModelOptions *options = [self getLabelModelOptions:params];
-            FritzVisionLabelModel *visionModel = [FritzVisionLabelModel new];
-            [visionModel
+            FritzVisionObjectModelOptions *options = [self getLabelModelOptions:params];
+            FritzVisionObjectModel *objectModel = [FritzVisionObjectModel new];
+            [objectModel
              predict:visionImage
              options:options
              completion:^(NSArray *objects, NSError *error) {
@@ -77,11 +79,11 @@ RCT_REMAP_METHOD(detect,
     
 }
 
+
 @end
 
 #else
-
-@implementation RNFritzVisionImageLabeling
+@implementation RNFritzVisionObjectDetection
 
 @end
 #endif
