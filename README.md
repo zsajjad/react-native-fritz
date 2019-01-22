@@ -11,7 +11,6 @@
 
 ### Manual installation
 
-
 #### iOS
 
 1. In XCode, in the project navigator, right click `Libraries` ➜ `Add Files to [your project's name]`
@@ -30,9 +29,10 @@
   	project(':react-native-fritz').projectDir = new File(rootProject.projectDir, 	'../node_modules/react-native-fritz/android')
   	```
 3. Insert the following lines inside the dependencies block in `android/app/build.gradle`:
-  	```
-      compile project(':react-native-fritz')
-  	```
+
+```
+	compile project(':react-native-fritz')
+```
 
 #### Windows
 [Read it! :D](https://github.com/ReactWindows/react-native)
@@ -55,4 +55,4 @@ RNFritz;
 ### iOS Toubleshoot
 
 - Set `Allow Non-modular Include in Framework Module` to `Yes`, In build settings of RNFritz Target Under Pods project.
--  
+- 
