@@ -39,6 +39,7 @@ RCT_EXPORT_MODULE()
         [FritzCore configure];
         configured = true;
     }
+    
     _resolve = resolve;
     _reject = reject;
 }

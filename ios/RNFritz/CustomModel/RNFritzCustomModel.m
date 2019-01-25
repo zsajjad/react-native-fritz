@@ -15,7 +15,10 @@
 @import Vision;
 @import FritzVision;
 
-@implementation RNFritzCustomModel
+@implementation RNFritzCustomModel {
+    NSMutableDictionary *models;
+};
+
 BOOL initialized = false;
 
 - (dispatch_queue_t)methodQueue
@@ -24,8 +27,18 @@ BOOL initialized = false;
 }
 RCT_EXPORT_MODULE()
 
-- (NSMutableArray *) prepareOutput: (NSArray *)labels {
+//+ (NSArray *) models = [[NSArray alloc] init];
+
+- (instancetype) init {
+    self = [super init];
+    models = [[NSMutableDictionary alloc] init];
+    return self;
+}
+
+- (NSMutableArray *) prepareOutput: (NSArray *)labels predicate:(NSPredicate *)predicate limit:(long *)limit {
     NSMutableArray *output = [NSMutableArray array];
+    NSArray *temp = [labels filteredArrayUsingPredicate:predicate];
+    NSArray *objects = [temp subarrayWithRange:NSMakeRange(0, MIN(limit, temp.count))];
     for (VNClassificationObservation *label in labels) {
         [output addObject:@{
                             @"label": [label valueForKey:@"description"],
@@ -36,8 +49,56 @@ RCT_EXPORT_MODULE()
     return output;
 }
 
+- (VNCoreMLModel *) loadModel: (NSString *)modelName {
+    NSURL *modelUrl = [[NSBundle mainBundle] URLForResource:modelName withExtension:@"mlmodelc"];
+    NSError *error;
+    MLModel *model = [MLModel modelWithContentsOfURL:modelUrl error:&error].fritz;
+    if (error) {
+        @throw error;
+    }
+    VNCoreMLModel *visionModel = [VNCoreMLModel modelForMLModel:model error:&error];
+    if (error) {
+        @throw error;
+    }
+    return visionModel;
+}
+
+- (VNCoreMLModel *) getModel: (NSString *)modelName {
+    if (![models valueForKey:modelName]) {
+        VNCoreMLModel *newModel = [self loadModel:modelName];
+        [models setValue:newModel forKey:modelName];
+    }
+    return [models valueForKey:modelName];
+}
+
+RCT_REMAP_METHOD(initializeModel,
+                 initializeModel:
+                (NSString *)modelName
+                resolver:(RCTPromiseResolveBlock)resolve
+                rejecter:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        @try {
+            [self getModel:modelName];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                resolve(@YES);
+            });
+        }
+        @catch (NSException *exception) {
+            NSError *error = [RNFritzUtils errorFromException:exception];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                reject([NSString stringWithFormat: @"%ld", [error code]],
+                       [error description],
+                       error);
+            });
+        }
+    });
+}
+
+
 RCT_REMAP_METHOD(detectFromImage,
-                 detectFromImage:(NSDictionary *)params
+                 detectFromImage:
+                 (NSString *)modelName
+                 params:(NSDictionary *)params
                  resolver:(RCTPromiseResolveBlock)resolve
                  rejecter:(RCTPromiseRejectBlock)reject
                  ) {
@@ -45,48 +106,36 @@ RCT_REMAP_METHOD(detectFromImage,
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         RNFritz *fritz = [[RNFritz alloc] init];
-//        if (!initialized) {
-//            [[FritzCustomModel alloc] init];
-//        }
         @try {
             [fritz initializeDetection:resolve rejector:reject];
             NSDictionary *options = [[NSDictionary alloc] init];
-            
-            NSString *imagePath = [params valueForKey:@"imagePath"];
-            NSURL *imageUrl = [[NSURL alloc] initWithString:imagePath];
-            NSData *imageData = [NSData dataWithContentsOfURL:imageUrl];
+            NSData *imageData = [RNFritzUtils getImageData:[params valueForKey:@"imagePath"]];
 
-            
-            NSPredicate *predicate = [NSPredicate
-                                      predicateWithFormat:@"self.confidence >= %f",
-                                      [[params valueForKey:@"threshold"] floatValue]];
-            long limit = [[params valueForKey:@"resultLimit"] integerValue];
-
-            NSURL *modelUrl = [[NSBundle mainBundle] URLForResource:@"CarRecognition" withExtension:@"mlmodelc"];
-            NSError *error;
-            
-            MLModel *model = [MLModel modelWithContentsOfURL:modelUrl error:&error].fritz;
-            VNCoreMLModel *visionModel = [VNCoreMLModel modelForMLModel:model error:&error];
-            if (error) {
-                RCTLog(@"%@", error.debugDescription);
-            }
-            VNCoreMLRequest *modelRequest = [[VNCoreMLRequest alloc] initWithModel:visionModel completionHandler: (VNRequestCompletionHandler) ^(VNRequest *request, NSError *error){
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    @try {
-                        if (error != nil) {
-                            [fritz onError:error];
-                            return;
+            VNCoreMLModel *model = [self getModel:modelName];
+            VNCoreMLRequest *modelRequest =
+                [[VNCoreMLRequest alloc]
+                 initWithModel:model
+                 completionHandler:(VNRequestCompletionHandler) ^(VNRequest *request, NSError *error){
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        @try {
+                            if (error != nil) {
+                                [fritz onError:error];
+                                return;
+                            }
+                            NSPredicate *predicate = [NSPredicate
+                                                      predicateWithFormat:@"self.confidence >= %f",
+                                                      [[params valueForKey:@"threshold"] floatValue]];
+                            long limit = [[params valueForKey:@"resultLimit"] integerValue];
+                            NSArray *output = [self prepareOutput:request.results predicate:predicate limit:limit];
+                            [fritz onSuccess:output];
                         }
-                        NSArray *temp = [request.results filteredArrayUsingPredicate:predicate];
-                        NSArray *objects = [temp subarrayWithRange:NSMakeRange(0, MIN(limit, temp.count))];
-                        [fritz onSuccess:[self prepareOutput:objects]];
-                    }
-                    @catch (NSException *e) {
-                        [fritz catchException:e];
-                    }
-                });
-            }];
+                        @catch (NSException *e) {
+                            [fritz catchException:e];
+                        }
+                    });
+                 }];
             VNImageRequestHandler *handler = [[VNImageRequestHandler alloc] initWithData:imageData options:options];
+            NSError *error;
             [handler performRequests:@[modelRequest] error:&error];
         }
         @catch (NSException *e) {

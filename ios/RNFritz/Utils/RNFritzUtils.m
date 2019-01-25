@@ -39,4 +39,8 @@
                                   userInfo: exceptionInfo];
 }
 
++ (NSData *) getImageData: (NSString *)path {
+    return [NSData dataWithContentsOfURL:[[NSURL alloc] initWithString:path]];
+}
+
 @end

@@ -15,4 +15,6 @@ Pod::Spec.new do |s|
 
   s.dependency "React"
   s.dependency "Fritz"
+#  s.dependency "Fritz/VisionLabelModel"
+
 end

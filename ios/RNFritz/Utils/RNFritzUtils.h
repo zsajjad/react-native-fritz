@@ -14,6 +14,7 @@
 + (FritzVisionImage *) getFritzVisionImage: (NSString *)imagePath;
 + (NSError *) errorFromException: (NSException *)exception;
 + (UIImage *) getUIImage: (NSString *)imagePath;
++ (NSData *) getImageData: (NSString *)path;
 
 @end
 
