@@ -32,11 +32,10 @@ RCT_EXPORT_MODULE()
 - (NSMutableArray *) prepareOutput: (NSArray *)labels {
     NSMutableArray *output = [NSMutableArray array];
     for (FritzVisionLabel *label in labels) {
-        RCTLog([label debugDescription]);
         [output addObject:@{
-                            @"label": [label valueForKey:@"description"],
+                            @"label": [label valueForKey:@"label"],
                             @"description": [label valueForKey:@"description"],
-                            @"confidence": @1.0,
+//                            @"confidence": @([[label valueForKey:@"confidence"] floatValue]),
                             }];
     }
     return output;
