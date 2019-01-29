@@ -2,8 +2,7 @@ import { NativeModules } from 'react-native';
 
 const { RNFritz } = NativeModules;
 
-export const { RNFritzVisionImageLabeling } = NativeModules;
-export const { RNFritzVisionObjectDetection } = NativeModules;
-export const { RNFritzCustomModel } = NativeModules;
-
+export const { RNFritzVisionLabel } = NativeModules;
+export const { RNFritzVisionObject } = NativeModules;
+export const { RNFritzTextRecognition } = NativeModules;
 export default RNFritz;

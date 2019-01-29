@@ -31,6 +31,9 @@ repositories {
 }
 
 dependencies {
-    compile 'com.facebook.react:react-native:+'
+    implementation 'com.facebook.react:react-native:+'
+    compileOnly 'ai.fritz:core:2.1.0'
+    compileOnly 'ai.fritz:vision-label:2.1.0'
+    compileOnly 'ai.fritz:vision-object:2.1.0'
+    implementation 'ai.fritz:custom-model-tflite:2.1.0'
 }
-  
