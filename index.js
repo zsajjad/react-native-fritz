@@ -1,4 +1,4 @@
-import { NativeModules } from 'react-native';
+import { NativeModules } from "react-native";
 
 const { RNFritz } = NativeModules;
 
@@ -34,6 +34,5 @@ export async function RNFritzCustomModel(fileInfo) {
     throw e;
   }
 }
-
 
 export default RNFritz;
