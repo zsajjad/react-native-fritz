@@ -19,27 +19,23 @@
     NSMutableDictionary *models;
 };
 
-BOOL initialized = false;
-
 - (dispatch_queue_t)methodQueue
 {
     return dispatch_get_main_queue();
 }
-RCT_EXPORT_MODULE()
-
-//+ (NSArray *) models = [[NSArray alloc] init];
 
 - (instancetype) init {
     self = [super init];
     models = [[NSMutableDictionary alloc] init];
     return self;
 }
+RCT_EXPORT_MODULE()
 
 - (NSMutableArray *) prepareOutput: (NSArray *)labels predicate:(NSPredicate *)predicate limit:(long *)limit {
     NSMutableArray *output = [NSMutableArray array];
     NSArray *temp = [labels filteredArrayUsingPredicate:predicate];
     NSArray *objects = [temp subarrayWithRange:NSMakeRange(0, MIN(limit, temp.count))];
-    for (VNClassificationObservation *label in labels) {
+    for (VNClassificationObservation *label in objects) {
         [output addObject:@{
                             @"label": [label valueForKey:@"description"],
                             @"description": [label valueForKey:@"description"],
@@ -51,6 +47,9 @@ RCT_EXPORT_MODULE()
 
 - (VNCoreMLModel *) loadModel: (NSString *)modelName {
     NSURL *modelUrl = [[NSBundle mainBundle] URLForResource:modelName withExtension:@"mlmodelc"];
+    if (!modelUrl) {
+        @throw [[NSException alloc] initWithName:@"MODEL_NOT_FOUND" reason:@"Model url is nil" userInfo:nil];
+    }
     NSError *error;
     MLModel *model = [MLModel modelWithContentsOfURL:modelUrl error:&error].fritz;
     if (error) {
@@ -73,12 +72,12 @@ RCT_EXPORT_MODULE()
 
 RCT_REMAP_METHOD(initializeModel,
                  initializeModel:
-                (NSString *)modelName
+                (NSDictionary *)fileInfo
                 resolver:(RCTPromiseResolveBlock)resolve
                 rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         @try {
-            [self getModel:modelName];
+            [self getModel:[fileInfo valueForKey:@"name"]];
             dispatch_async(dispatch_get_main_queue(), ^{
                 resolve(@YES);
             });
@@ -126,7 +125,7 @@ RCT_REMAP_METHOD(detectFromImage,
                                                       predicateWithFormat:@"self.confidence >= %f",
                                                       [[params valueForKey:@"threshold"] floatValue]];
                             long limit = [[params valueForKey:@"resultLimit"] integerValue];
-                            NSArray *output = [self prepareOutput:request.results predicate:predicate limit:limit];
+                            NSArray *output = [self prepareOutput:request.results predicate:predicate limit:&limit];
                             [fritz onSuccess:output];
                         }
                         @catch (NSException *e) {
@@ -148,4 +147,8 @@ RCT_REMAP_METHOD(detectFromImage,
     
 }
 
++ (BOOL)requiresMainQueueSetup
+{
+    return YES;
+}
 @end
