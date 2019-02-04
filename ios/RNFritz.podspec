@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
   s.requires_arc  = true
 
   s.dependency "React"
-  s.dependency "Fritz"
+  s.dependency "Fritz", '~> 3.0.0-beta.3'
 #  s.dependency "Fritz/VisionLabelModel"
 
 end

@@ -30,13 +30,13 @@
     NSDictionary *exceptionInfo = @{
                                     @"name": exception.name,
                                     @"reason": exception.reason,
-                                    @"callStackReturnAddresses": exception.callStackReturnAddresses,
-                                    @"callStackSymbols": exception.callStackSymbols,
-                                    @"userInfo": exception.userInfo
+                                    @"description": exception.description,
+//                                    @"callStackReturnAddresses": exception.callStackReturnAddresses,
+//                                    @"callStackSymbols": exception.callStackSymbols,
                                     };
-    return [[NSError alloc] initWithDomain: @"RNFritz"
-                                      code: 0
-                                  userInfo: exceptionInfo];
+    return [[NSError alloc] initWithDomain:@"RNFritz"
+                                      code:0
+                                  userInfo:exceptionInfo];
 }
 
 + (NSData *) getImageData: (NSString *)path {

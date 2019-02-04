@@ -17,17 +17,17 @@ export async function RNFritzCustomModel(fileInfo) {
     }
     modelId = fileInfo.name;
 
-    const detectFromImage = (params) => {
-      return CustomModelNative.detectFromImage(modelId, params);
+    const predictFromImage = (params) => {
+      return CustomModelNative.predictFromImage(modelId, params);
     }
 
-    const detectFromArray = (params) => {
-      return CustomModelNative.detectFromArray(modelId, params);
-    }
+    // const predictFromArray = (params) => {
+    //   return CustomModelNative.predictFromArray(modelId, params);
+    // }
 
     return {
-      detectFromImage,
-      detectFromArray
+      predictFromImage,
+      // predictFromArray
     };
   } catch (e) {
     console.warn(e);

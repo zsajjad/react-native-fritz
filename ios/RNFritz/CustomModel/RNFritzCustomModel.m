@@ -45,39 +45,62 @@ RCT_EXPORT_MODULE()
     return output;
 }
 
-- (VNCoreMLModel *) loadModel: (NSString *)modelName {
+- (VNCoreMLModel *) loadModel: (NSDictionary *)modelParams {
+    NSString *modelName = [modelParams valueForKey:@"name"];
     NSURL *modelUrl = [[NSBundle mainBundle] URLForResource:modelName withExtension:@"mlmodelc"];
     if (!modelUrl) {
         @throw [[NSException alloc] initWithName:@"MODEL_NOT_FOUND" reason:@"Model url is nil" userInfo:nil];
     }
     NSError *error;
-    MLModel *model = [MLModel modelWithContentsOfURL:modelUrl error:&error].fritz;
-    if (error) {
-        @throw error;
-    }
-    VNCoreMLModel *visionModel = [VNCoreMLModel modelForMLModel:model error:&error];
+    FritzModelConfiguration* config = [[FritzModelConfiguration alloc]
+                                       initWithIdentifier:[modelParams valueForKey:@"modelIdentifier"]
+                                       version:[[modelParams valueForKey:@"modelVersion"] integerValue]
+                                       cpuAndGPUOnly:false];
+    SessionManager* sessionManager = [[FritzCore configuration] sessionManager];
+    FritzManagedModel* managedModel = [[FritzManagedModel alloc]
+                                       initWithModelConfig:config
+                                       sessionManager:sessionManager
+                                       loadActive:true];
+    
+    MLModel *model = [MLModel modelWithContentsOfURL:modelUrl error:&error];
+    FritzMLModel* fritzModel = [[FritzMLModel alloc]
+                                initWithIdentifiedModel:model
+                                config:config
+                                sessionManager:sessionManager];
+    
+    VNCoreMLModel *visionModel = [VNCoreMLModel modelForMLModel:fritzModel error:&error];
     if (error) {
         @throw error;
     }
     return visionModel;
 }
 
-- (VNCoreMLModel *) getModel: (NSString *)modelName {
+- (VNCoreMLModel *) getModel: (NSDictionary *)modelParams {
+    NSString *modelName = [modelParams valueForKey:@"name"] ;
     if (![models valueForKey:modelName]) {
-        VNCoreMLModel *newModel = [self loadModel:modelName];
-        [models setValue:newModel forKey:modelName];
+        VNCoreMLModel *model = [self loadModel:modelParams];
+        [models setValue:model forKey:modelName];
+    }
+    return [models valueForKey:modelName];
+}
+
+- (VNCoreMLModel *) getClassModel:(NSString *)modelName {
+    if (![models valueForKey:modelName]) {
+        return nil;
     }
     return [models valueForKey:modelName];
 }
 
 RCT_REMAP_METHOD(initializeModel,
                  initializeModel:
-                (NSDictionary *)fileInfo
+                (NSDictionary *)params
                 resolver:(RCTPromiseResolveBlock)resolve
                 rejecter:(RCTPromiseRejectBlock)reject) {
+    if (@available(iOS 11.0, *)) {
+
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         @try {
-            [self getModel:[fileInfo valueForKey:@"name"]];
+            [self getModel:params];
             dispatch_async(dispatch_get_main_queue(), ^{
                 resolve(@YES);
             });
@@ -91,11 +114,14 @@ RCT_REMAP_METHOD(initializeModel,
             });
         }
     });
+    } else {
+        reject(0, @"CORE_ML_UNAVAILABLE", nil);
+    }
 }
 
 
-RCT_REMAP_METHOD(detectFromImage,
-                 detectFromImage:
+RCT_REMAP_METHOD(predictFromImage,
+                 predictFromImage:
                  (NSString *)modelName
                  params:(NSDictionary *)params
                  resolver:(RCTPromiseResolveBlock)resolve
@@ -105,12 +131,12 @@ RCT_REMAP_METHOD(detectFromImage,
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         RNFritz *fritz = [[RNFritz alloc] init];
+        [fritz initializeDetection:resolve rejector:reject];
         @try {
-            [fritz initializeDetection:resolve rejector:reject];
             NSDictionary *options = [[NSDictionary alloc] init];
             NSData *imageData = [RNFritzUtils getImageData:[params valueForKey:@"imagePath"]];
 
-            VNCoreMLModel *model = [self getModel:modelName];
+            VNCoreMLModel *model = [self getClassModel:modelName];
             VNCoreMLRequest *modelRequest =
                 [[VNCoreMLRequest alloc]
                  initWithModel:model
