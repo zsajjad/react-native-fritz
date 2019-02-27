@@ -4,6 +4,7 @@ const { RNFritz } = NativeModules;
 
 export const { RNFritzVisionImageLabeling } = NativeModules;
 export const { RNFritzVisionObjectDetection } = NativeModules;
+export const { RNFritzVisionImageStyling } = NativeModules;
 
 const { RNFritzCustomModel: CustomModelNative } = NativeModules;
 
