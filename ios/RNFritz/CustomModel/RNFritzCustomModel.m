@@ -8,7 +8,6 @@
 #import <React/RCTLog.h>
 #import "RNFritz.h"
 #import "RNFritzUtils.h"
-#import "FritzCustomModel.h"
 #import "RNFritzCustomModel.h"
 
 @import CoreML;
@@ -22,6 +21,11 @@
 - (dispatch_queue_t)methodQueue
 {
     return dispatch_get_main_queue();
+}
+
++ (BOOL)requiresMainQueueSetup
+{
+    return YES;
 }
 
 - (instancetype) init {
@@ -173,8 +177,4 @@ RCT_REMAP_METHOD(predictFromImage,
     
 }
 
-+ (BOOL)requiresMainQueueSetup
-{
-    return YES;
-}
 @end

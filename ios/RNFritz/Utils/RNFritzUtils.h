@@ -15,6 +15,7 @@
 + (NSError *) errorFromException: (NSException *)exception;
 + (UIImage *) getUIImage: (NSString *)imagePath;
 + (NSData *) getImageData: (NSString *)path;
++ (FritzMLModel *) getCustomMLModel: (NSDictionary *)modelParams;
 
 @end
 

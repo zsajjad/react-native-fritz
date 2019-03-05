@@ -10,15 +10,15 @@
 
 @implementation FritzCustomModel
 + (NSString * _Nonnull)fritzModelIdentifier {
-    RCTLog([[NSBundle mainBundle] objectForInfoDictionaryKey:@"FritzModelId"]);
+    RCTLog(@"%@", [[NSBundle mainBundle] objectForInfoDictionaryKey:@"FritzModelId"]);
     return [[NSBundle mainBundle] objectForInfoDictionaryKey:@"FritzModelId"];
 }
 
-+ (FritzSession *)fritzSession {
++ (FritzSession *)fritzSession  API_AVAILABLE(ios(11.0)) {
     static FritzSession *session = nil;
     static dispatch_once_t token;
     
-    RCTLog([[NSBundle mainBundle] objectForInfoDictionaryKey:@"FritzAppToken"]);
+    RCTLog(@"%@", [[NSBundle mainBundle] objectForInfoDictionaryKey:@"FritzAppToken"]);
     dispatch_once(&token, ^{
         session = [[FritzSession alloc] initWithAppToken:[[NSBundle mainBundle] objectForInfoDictionaryKey:@"FritzAppToken"]];
     });
@@ -29,5 +29,7 @@
 //    return [[[NSBundle mainBundle] objectForInfoDictionaryKey:@"FritzModelVersion"] integerValue];
     return 1;
 }
+
+@synthesize model;
 
 @end

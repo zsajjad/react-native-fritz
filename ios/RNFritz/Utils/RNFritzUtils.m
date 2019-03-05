@@ -6,7 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
-
+#import <React/RCTLog.h>
 #import "RNFritzUtils.h"
 @import FritzVision;
 
@@ -41,6 +41,35 @@
 
 + (NSData *) getImageData: (NSString *)path {
     return [NSData dataWithContentsOfURL:[[NSURL alloc] initWithString:path]];
+}
+
++ (FritzMLModel *) getCustomMLModel: (NSDictionary *)modelParams  API_AVAILABLE(ios(11.0)){
+    NSString *modelName = [modelParams valueForKey:@"name"];
+    NSURL *modelUrl = [[NSBundle mainBundle] URLForResource:modelName withExtension:@"mlmodelc"];
+    RCTLog(@"%@", [[NSBundle mainBundle] bundleURL]);
+    if (!modelUrl) {
+        @throw [[NSException alloc] initWithName:@"MODEL_NOT_FOUND" reason:@"Model url is nil" userInfo:nil];
+    }
+    NSError *error;
+    FritzModelConfiguration* config = [[FritzModelConfiguration alloc]
+                                       initWithIdentifier:[modelParams valueForKey:@"modelIdentifier"]
+                                       version:[[modelParams valueForKey:@"modelVersion"] integerValue]
+                                       cpuAndGPUOnly:false];
+    SessionManager* sessionManager = [[FritzCore configuration] sessionManager];
+    FritzManagedModel* managedModel = [[FritzManagedModel alloc]
+                                       initWithModelConfig:config
+                                       sessionManager:sessionManager
+                                       loadActive:true];
+
+    MLModel *model = [MLModel modelWithContentsOfURL:modelUrl error:&error];
+    if (error) {
+        @throw error;
+    }
+    FritzMLModel* fritzModel = [[FritzMLModel alloc]
+                                initWithIdentifiedModel:model
+                                config:config
+                                sessionManager:sessionManager];
+    return fritzModel;
 }
 
 @end
