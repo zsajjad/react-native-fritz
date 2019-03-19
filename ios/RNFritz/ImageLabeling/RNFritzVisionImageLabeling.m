@@ -9,7 +9,6 @@
 
 #if __has_include(<FritzVisionLabelModel/FritzVisionLabelModel.h>)
 
-#import "RNFritz.h"
 #import "RNFritzUtils.h"
 
 @import FritzVisionLabelModel;
@@ -47,9 +46,7 @@ RCT_REMAP_METHOD(detect,
                  rejecter:(RCTPromiseRejectBlock)reject
                  ) {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        RNFritz *fritz = [[RNFritz alloc] init];
         @try {
-            [fritz initializeDetection:resolve rejector:reject];
             NSString *imagePath = [params valueForKey:@"imagePath"];
             FritzVisionImage *visionImage = [RNFritzUtils getFritzVisionImage:imagePath];
             FritzVisionLabelModelOptions *options = [self getLabelModelOptions:params];
@@ -60,18 +57,35 @@ RCT_REMAP_METHOD(detect,
              completion:^(NSArray *objects, NSError *error) {
                  @try {
                      if (error != nil) {
-                         [fritz onError:error];
+                         dispatch_async(dispatch_get_main_queue(), ^{
+                             reject([NSString stringWithFormat: @"%ld", [error code]],
+                                    [error description],
+                                    error);
+                         });
                          return;
                      }
-                     [fritz onSuccess:[self prepareOutput:objects]];
+                     NSArray *output = [self prepareOutput:objects];
+                     dispatch_async(dispatch_get_main_queue(), ^{
+                         resolve(output);
+                     });
                  }
                  @catch (NSException *e) {
-                     [fritz catchException:e];
+                     NSError *error = [RNFritzUtils errorFromException:e];
+                     dispatch_async(dispatch_get_main_queue(), ^{
+                         reject([NSString stringWithFormat: @"%ld", [error code]],
+                                [error description],
+                                error);
+                     });
                  }
              }];
         }
         @catch (NSException *e) {
-            [fritz catchException:e];
+            NSError *error = [RNFritzUtils errorFromException:e];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                reject([NSString stringWithFormat: @"%ld", [error code]],
+                       [error description],
+                       error);
+            });
         }
     });
     

@@ -34,35 +34,20 @@ RCT_EXPORT_MODULE()
 }
 
 
--(void) initializeDetection: (RCTPromiseResolveBlock)resolve rejector:(RCTPromiseRejectBlock)reject {
-    if (!configured) {
-        [FritzCore configure];
-        configured = true;
+-(void) initialize: (RCTPromiseResolveBlock)resolve rejector:(RCTPromiseRejectBlock)reject {
+    if (@available(iOS 11.0, *)) {
+        if (!configured) {
+            [FritzCore configure];
+            configured = true;
+            resolve(@YES);
+        } else {
+            reject(0, @"Already configured", nil);
+        }
+    } else {
+        reject(0, @"OS not supported", nil);
     }
-    
-    _resolve = resolve;
-    _reject = reject;
 }
 
--(void) onError: (NSError *)error {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        self->_reject(
-                [NSString stringWithFormat: @"%ld", [error code]],
-                [error description],
-                error);
-    });
-}
-
--(void) catchException: (NSException *)exception {
-    NSError *error = [RNFritzUtils errorFromException:exception];
-    [self onError:error];
-}
-
--(void) onSuccess: (NSMutableArray *)output {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        self->_resolve(output);
-    });
-}
 
 @end
   

@@ -11,10 +11,6 @@
 
 @interface RNFritz : NSObject <RCTBridgeModule>
 
--(void) catchException: (NSException *) exception;
--(void) initializeDetection: (RCTPromiseResolveBlock)resolve rejector:(RCTPromiseRejectBlock)reject;
--(void) onSuccess: (NSArray *)objects;
--(void) onError: (NSError *)error;
-
+-(void) initialize: (RCTPromiseResolveBlock)resolve rejector:(RCTPromiseRejectBlock)reject;
 
 @end

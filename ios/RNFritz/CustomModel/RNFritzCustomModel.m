@@ -6,7 +6,6 @@
 //
 
 #import <React/RCTLog.h>
-#import "RNFritz.h"
 #import "RNFritzUtils.h"
 #import "RNFritzCustomModel.h"
 
@@ -101,23 +100,22 @@ RCT_REMAP_METHOD(initializeModel,
                 resolver:(RCTPromiseResolveBlock)resolve
                 rejecter:(RCTPromiseRejectBlock)reject) {
     if (@available(iOS 11.0, *)) {
-
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        @try {
-            [self getModel:params];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                resolve(@YES);
-            });
-        }
-        @catch (NSException *exception) {
-            NSError *error = [RNFritzUtils errorFromException:exception];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                reject([NSString stringWithFormat: @"%ld", [error code]],
-                       [error description],
-                       error);
-            });
-        }
-    });
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            @try {
+                [self getModel:params];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    resolve(@YES);
+                });
+            }
+            @catch (NSException *exception) {
+                NSError *error = [RNFritzUtils errorFromException:exception];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    reject([NSString stringWithFormat: @"%ld", [error code]],
+                           [error description],
+                           error);
+                });
+            }
+        });
     } else {
         reject(0, @"CORE_ML_UNAVAILABLE", nil);
     }
@@ -134,8 +132,6 @@ RCT_REMAP_METHOD(predictFromImage,
     if (@available(iOS 11.0, *)) {
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        RNFritz *fritz = [[RNFritz alloc] init];
-        [fritz initializeDetection:resolve rejector:reject];
         @try {
             NSDictionary *options = [[NSDictionary alloc] init];
             NSData *imageData = [RNFritzUtils getImageData:[params valueForKey:@"imagePath"]];
@@ -148,7 +144,11 @@ RCT_REMAP_METHOD(predictFromImage,
                     dispatch_async(dispatch_get_main_queue(), ^{
                         @try {
                             if (error != nil) {
-                                [fritz onError:error];
+                                dispatch_async(dispatch_get_main_queue(), ^{
+                                    reject([NSString stringWithFormat: @"%ld", [error code]],
+                                           [error description],
+                                           error);
+                                });
                                 return;
                             }
                             NSPredicate *predicate = [NSPredicate
@@ -156,10 +156,17 @@ RCT_REMAP_METHOD(predictFromImage,
                                                       [[params valueForKey:@"threshold"] floatValue]];
                             long limit = [[params valueForKey:@"resultLimit"] integerValue];
                             NSArray *output = [self prepareOutput:request.results predicate:predicate limit:&limit];
-                            [fritz onSuccess:output];
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                resolve(output);
+                            });
                         }
                         @catch (NSException *e) {
-                            [fritz catchException:e];
+                            NSError *error = [RNFritzUtils errorFromException:e];
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                reject([NSString stringWithFormat: @"%ld", [error code]],
+                                       [error description],
+                                       error);
+                            });
                         }
                     });
                  }];
@@ -168,7 +175,12 @@ RCT_REMAP_METHOD(predictFromImage,
             [handler performRequests:@[modelRequest] error:&error];
         }
         @catch (NSException *e) {
-            [fritz catchException:e];
+            NSError *error = [RNFritzUtils errorFromException:e];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                reject([NSString stringWithFormat: @"%ld", [error code]],
+                       [error description],
+                       error);
+            });
         }
     });
     } else {

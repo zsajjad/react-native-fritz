@@ -9,7 +9,6 @@
 
 #if __has_include(<FritzVisionStyleModelPaintings/FritzVisionStyleModelPaintings.h>)
 
-#import "RNFritz.h"
 #import "RNFritzUtils.h"
 
 @import FritzVisionStyleModelPaintings;
@@ -52,7 +51,6 @@ RCT_EXPORT_MODULE()
         NSError *error;
         FritzMLModel *model = [RNFritzUtils getCustomMLModel:modelParams];
         FritzVisionStyleModel *styleModel = [[FritzVisionStyleModel alloc] initWithFritzMLModel:model error:&error];
-//        FritzVisionStyleModel *styleModel = [[FritzVisionStyleModel alloc] initWithIdentifiedModel:model];
         if (error) {
             @throw error;
         }
