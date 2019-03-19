@@ -11,6 +11,6 @@
 
 @interface RNFritz : NSObject <RCTBridgeModule>
 
--(void) initialize: (RCTPromiseResolveBlock)resolve rejector:(RCTPromiseRejectBlock)reject;
+-(void) configure: (RCTPromiseResolveBlock)resolve rejector:(RCTPromiseRejectBlock)reject;
 
 @end
