@@ -1,7 +1,7 @@
 
 {
   "name": "react-native-fritz",
-  "version": "1.0.0",
+  "version": "1.0.0-alpha1",
   "summary": "React Native Wrapper for Fritz SDK",
   "description": "React Native Fritz SDK",
   "homepage": "https://github.com/zsajjad/react-native-fritz.git",
