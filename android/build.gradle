@@ -31,6 +31,10 @@ repositories {
 }
 
 dependencies {
-    compile 'com.facebook.react:react-native:+'
+    implementation 'com.facebook.react:react-native:+'
+    implementation group: 'commons-io', name: 'commons-io', version: '2.6'
+    implementation 'ai.fritz:core:2.1.0'
+    compileOnly 'ai.fritz:vision-label:2.1.0'
+    compileOnly 'ai.fritz:vision-object:2.1.0'
+    compileOnly 'ai.fritz:custom-model-tflite:2.1.0'
 }
-  
